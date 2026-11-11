@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#182436">
+<title>Twilight Mart</title>
+<link rel="stylesheet" href="store.css">
+<script defer src="store-engine.js"></script>
+<script defer src="store-characters.js"></script>
+<script defer src="store-art.js"></script>
+<script defer src="store-ui.js"></script>
+</head>
+<body>
+<main>
+  <div id="workbench" class="workbench">
+    <header class="masthead">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 32 32" aria-hidden="true" shape-rendering="crispEdges"><path fill="#f8d38b" d="M6 16h20v12H6z"/><path fill="#452d32" d="M5 14h22v3H5zM7 27h18v2H7zM14 19h5v8h-5z"/><path fill="#e6815f" d="M5 8h22v6H5z"/><path fill="#fff1ce" d="M8 8h3v6H8zm7 0h3v6h-3zm7 0h3v6h-3z"/><path fill="#715064" d="M4 6h24v2H4z"/><path fill="#b5dad1" d="M8 19h4v5H8zm13 0h3v5h-3z"/></svg>
+        <h1 class="brand-name">Twilight Mart</h1>
+      </div>
+    </header>
+    <section class="world" aria-label="超市地图">
+      <section class="scene-strip" aria-label="店内场景实况">
+        <div class="scene-event" id="live-scene"><i class="scene-icon live-dot" aria-hidden="true"></i><div><small>店内实况 <time class="time" id="clock">17:50:00</time></small><b id="phase">等待下单</b><span id="map-destination" class="sr-only"></span></div></div>
+        <div class="scene-event" id="stock-scene"><i class="scene-icon restock-icon" aria-hidden="true"></i><div><small id="scene-stock-label">牛奶架</small><b id="scene-stock">查看货架</b></div></div>
+        <div class="scene-event" id="crowd-scene"><i class="scene-icon customer-icon" aria-hidden="true"></i><div><small>店内顾客</small><b id="scene-crowd">0 人</b></div></div>
+        <div class="scene-event" id="queue-scene"><i class="scene-icon queue-icon" aria-hidden="true"></i><div><small>共用收银台</small><b id="scene-queue">空闲</b></div></div>
+        <div class="scene-event" id="staff-scene"><i class="scene-icon staff-icon" aria-hidden="true"></i><div><small>店员</small><b id="scene-staff">在收银台</b></div></div>
+        <div class="scene-event" id="promo-scene"><i class="scene-icon sale-icon" aria-hidden="true"></i><div><small>鲜切水果</small><b id="scene-promo">原价 ¥30</b></div></div>
+      </section>
+      <header class="world-top">
+        <div class="legend"><span><i class="legend-plan"></i>规划路线</span><span><i class="legend-trail"></i>已走路线</span><span><i class="legend-target"></i>当前目标</span><span id="prior-route-legend" hidden><i class="legend-prior"></i>绕行前路线</span></div>
+        <div class="tools">
+          <button id="grid" type="button" class="tool" title="显示导航网格" aria-pressed="false">网格</button>
+          <button id="show-labels" type="button" class="tool" title="显示顾客动作等浮动提示" aria-pressed="false">浮动提示</button>
+          <button id="zoom-out" type="button" class="tool square" aria-label="缩小">−</button>
+          <button id="zoom-in" type="button" class="tool square" aria-label="放大">＋</button>
+        </div>
+        <div class="playback"><button id="pause" class="tool" type="button" disabled>暂停</button>
+          <button id="step-event" class="tool" type="button" disabled title="推进到下一条运行记录并暂停">下一事件</button>
+          <label class="sr-only" for="speed">模拟倍速</label>
+          <select id="speed" aria-label="模拟倍速"><option value="2">×2</option><option value="6" selected>×6</option><option value="10">×10</option><option value="12">×12</option><option value="16">×16</option></select>
+          <button id="reset" class="tool" type="button" title="重置演示，机器人回到店内停靠位">重置</button>
+        </div>
+      </header>
+      <div class="map-frame">
+        <canvas id="store-map" width="800" height="520" aria-label="Twilight Mart。机器人停靠位在左上入口旁的店内，右下出口旁是收银台。三组货柜分别陈列鲜切水果和鸡蛋、牛奶和面包、日用品和饮料。"></canvas>
+        <button id="phone-open" class="phone-launch" type="button" aria-haspopup="dialog" aria-controls="phone-dialog" aria-expanded="false">
+          <svg viewBox="0 0 18 22" aria-hidden="true" shape-rendering="crispEdges">
+            <path fill="#162431" d="M4 0h10v2h2v18h-2v2H4v-2H2V2h2z"/>
+            <path fill="#efbd78" d="M4 2h10v18H4z"/>
+            <path fill="#344f61" d="M5 5h8v11H5z"/>
+            <path fill="#b7d8d4" d="M6 6h6v8H6z"/>
+            <path fill="#609a94" d="M6 12h6v2H6z"/>
+            <path fill="#3f5565" d="M7 3h4v1H7zm1 14h2v2H8z"/>
+          </svg>
+          <span id="phone-trigger-label">点击下单</span>
+        </button>
+        <span id="phone-notice" class="sr-only" role="status"></span>
+        <button id="recommend-prompt" class="recommend-prompt" type="button" aria-haspopup="dialog" aria-controls="phone-dialog" hidden>
+          <span aria-hidden="true">✦</span><span><strong id="recommend-title">推荐加购面包</strong><small>点击查看建议并确认</small></span>
+        </button>
+        <div id="robot-bubble" class="robot-bubble" aria-hidden="true" hidden>
+          <div class="robot-bubble-body"><strong id="robot-bubble-action"></strong><span id="robot-bubble-reason"></span></div>
+          <i></i>
+        </div>
+        <div id="map-product" class="map-product" hidden><span id="map-product-icon"></span><div><small id="map-product-state">当前商品</small><b id="map-product-name"></b></div></div>
+      </div>
+    </section>
+
+    <aside id="side-rail" class="side-rail" data-pane="logs" aria-label="店内实时解读">
+      <nav class="rail-tabs" aria-label="切换实时面板">
+        <button id="rail-show-decision" type="button" aria-controls="robot-rail" aria-pressed="false">机器人</button>
+        <button id="rail-show-logs" type="button" aria-controls="event-details" aria-pressed="true">运行记录</button>
+        <button id="rail-show-shoppers" type="button" aria-controls="shopper-panel" aria-pressed="false">顾客</button>
+      </nav>
+      <section id="robot-rail" class="robot-rail rail-card" aria-labelledby="robot-rail-title">
+        <header><h2 id="robot-rail-title">机器人在想什么</h2><span id="model-badge" class="pill">CART · 模拟库存训练</span></header>
+        <ol class="decision-flow" aria-label="购物决策流程">
+          <li id="stage-order"><b>确认清单</b></li>
+          <li id="stage-target"><b>选下一站</b></li>
+          <li id="stage-route"><b>计算路线</b></li>
+          <li id="stage-execute"><b>核验离店</b></li>
+        </ol>
+        <strong id="rail-action" class="rail-action">等待下单</strong>
+        <dl class="rail-checks">
+          <div><dt>本步怎么判</dt><dd id="rail-reason">还没有购物清单，机器人在入口旁待命。</dd></div>
+          <div><dt>下一步看什么</dt><dd id="rail-next">收到清单后，先核对载重、预算和最晚离店时间。</dd></div>
+        </dl>
+        <p id="live-reason" class="sr-only"></p>
+      </section>
+      <section id="event-details" class="log-card rail-card" aria-labelledby="log-title">
+        <header class="log-head"><h3 id="log-title">运行记录</h3><span id="log-count">0 条</span></header>
+        <ol id="event-list" tabindex="0" aria-label="运行记录，最新在前"><li class="log-empty">下单后会在这里显示每一步。</li></ol>
+      </section>
+      <section id="shopper-panel" class="shopper-panel rail-card" aria-labelledby="shopper-title">
+        <header><h3 id="shopper-title">顾客在做什么</h3><span class="pill">随机来客</span></header>
+        <ul id="shopper-list"><li class="empty">当前暂无顾客</li></ul>
+        <p>货架间每条通道最多一人，店员也计入。机器人按安全间距让行。</p>
+      </section>
+      <button id="rules-open" class="rules-open" type="button" aria-haspopup="dialog" aria-controls="rules-dialog" aria-expanded="false"><span>查看规则</span><span aria-hidden="true">↗</span></button>
+    </aside>
+  </div>
+</main>
+<dialog id="rules-dialog" class="rules-dialog" aria-labelledby="rules-title">
+  <header class="rules-head"><h2 id="rules-title">机器人怎么做决定</h2><button id="rules-close" class="phone-close" type="button" aria-label="关闭规则" autofocus>×</button></header>
+  <div class="rules-body">
+    <dl class="rule-list">
+      <div><dt>确认清单</dt><dd>先核对预算、3 公斤载重上限和最晚离店时间。网页用 100 个模拟购物篮演示 Apriori 的「牛奶推荐面包」规则，顾客确认后才把面包加入清单。</dd></div>
+      <div><dt>选择下一站</dt><dd>先筛掉来不及完成的方案。模拟库存的 CART 风险达到 0.70 时优先取货，同档比新增耗时。库存规则对照则优先取有货且库存不超过 3 件的商品。</dd></div>
+      <div><dt>规划与避让</dt><dd>A* 在网格上计算去当前目标的路线，绕开货架和收银台。机器人离人表面不足 1.5 米时减速，不足 0.8 米时停让。连续两次确认安全后恢复，持续受阻则绕路或请员工接手。每条货架通道最多一人，店员也计入。</dd></div>
+      <div><dt>缺货与促销</dt><dd>缺货先登记补货，收到回执且通道安全后返架。等待达到 180 秒上限或剩余时间不足时，会请顾客确认删减。水果促销会比较优惠与等待成本。</dd></div>
+      <div><dt>核验、结账与离店</dt><dd>实物取到并收到库存回执才入篮。顾客与机器人按到达顺序共用收银台。核对有效价格并收到付款回执后，等闸机放行，实际离店才记录结果。机器人自行离店时结束本轮，下一单从入口进店。</dd></div>
+      <div><dt>模拟范围</dt><dd>库存变动、取货回执、结账付款和闸机放行均由网页模拟。门店库存预留、实物取放和真实设备接入属于报告中的系统设计。</dd></div>
+    </dl>
+    <details class="rules-detail">
+      <summary>本次决策详情</summary>
+      <div id="route-explanation" class="route-explanation" data-kind="ready" aria-label="本次路线判断">
+        <span id="route-kind">路线提示</span>
+        <div><strong id="route-headline">看看机器人为什么这么走</strong><p id="route-detail">下单后会显示机器人换目标或绕路的原因。</p></div>
+      </div>
+      <div class="decision-trace" aria-label="本步决策">
+        <div><small>看到的信息</small><p id="trace-input">等待购物清单</p></div>
+        <div><small>采用的规则</small><p id="trace-rule">载重上限 3000 克，超出要改数量</p></div>
+        <div><small>接下来的动作</small><p id="trace-action">用右上角手机提交清单</p></div>
+      </div>
+      <p id="explanation">下单后可查看缺货风险和取货优先级。</p>
+      <div id="candidate-list" class="candidates"></div>
+    </details>
+    <button type="button" id="quick-compare" class="secondary">打开算法对照</button>
+    <details class="rules-detail" id="report-w12">
+      <summary>报告 W12 复验</summary>
+      <dl class="rule-list">
+        <div><dt>固定条件</dt><dd>正常场景，关闭随机人流。两次均在 17:50 从停靠位出发，鸡蛋和牛奶各 1 盒，预算 ¥80，18:10 前离店，拒绝加购，随机种子 6143。</dd></div>
+      </dl>
+      <button type="button" id="run-w12" class="secondary" aria-controls="w12-results">运行两次</button>
+      <p id="w12-status" class="form-message" role="status"></p>
+      <dl id="w12-results" class="rule-list"></dl>
+      <details class="rules-detail">
+        <summary>查看模型来源</summary>
+        <dl class="rule-list">
+          <div><dt>模型版本和动作阈值</dt><dd id="w12-model"></dd></div>
+          <div><dt>原始模型文件 SHA-256</dt><dd id="w12-model-sha"></dd></div>
+          <div><dt>输入字段</dt><dd id="w12-model-features"></dd></div>
+          <div><dt>训练标签</dt><dd id="w12-model-label"></dd></div>
+        </dl>
+      </details>
+    </details>
+  </div>
+</dialog>
+<dialog id="phone-dialog" class="phone" aria-labelledby="phone-title">
+  <header class="phone-top">
+    <div class="phone-title"><div><span>Twilight Mart</span><h2 id="phone-title">超市下单</h2></div><button id="phone-close" class="phone-close" type="button" aria-label="关闭手机" autofocus>×</button></div>
+  </header>
+  <div id="phone-body" class="phone-body">
+    <div id="response" class="response" hidden>
+      <strong id="response-title">需要确认</strong>
+      <p id="response-text"></p>
+      <div><button id="decline" class="secondary" type="button">拒绝</button><button id="approve" class="primary" type="button">同意</button></div>
+    </div>
+    <div id="cart-controls">
+      <div class="field">
+        <label for="scenario">店内场景</label>
+        <select id="scenario" aria-describedby="scenario-hint"><option value="normal" selected>正常购物</option><option value="restock">缺货 · 等补货</option><option value="late">缺货 · 补货延迟</option><option value="promo">晚间水果促销</option><option value="handoff">员工接手</option><option value="crowd">行人避让</option><option value="compare">决策树对照</option><option value="showcase">综合演示 · 补货 / 顾客 / 促销</option></select>
+      </div>
+      <div class="field incident-field" id="incident-controls" hidden>
+        <label for="stockout-sku">缺货商品</label>
+        <select id="stockout-sku"><option value="MILK" selected>牛奶</option><option value="EGG">鸡蛋</option><option value="BREAD">面包</option><option value="FRUIT">鲜切水果</option></select>
+      </div>
+      <p id="scenario-hint" class="scenario-hint"></p>
+      <div id="algorithm-settings" class="field algorithm-settings">
+        <label for="risk-mode">数据挖掘设置</label><select id="risk-mode"><option value="cart">CART 决策树</option><option value="fallback">库存规则（对照）</option></select>
+      </div>
+      <div class="quick"><span>快捷清单</span><button type="button" id="preset-a">蛋＋奶</button><button type="button" id="preset-b">蛋＋面包</button></div>
+      <div id="products" class="products" aria-label="机器人可下单商品与数量"></div>
+      <div class="limits">
+        <label>预算 ¥<input id="budget" type="number" min="1" max="9999" step="1" value="80"></label>
+        <label>最晚离店<input id="deadline" type="time" value="18:10"></label>
+      </div>
+      <div class="cart-tally"><span>预计原价 <strong id="planned-price">¥34</strong></span><span id="planned-weight">1600 / 3000 克</span></div>
+      <button class="primary" type="button" id="submit">提交订单 <span aria-hidden="true">↗</span></button>
+    </div>
+    <p id="form-message" class="form-message" role="status"></p>
+    <section id="order-basket" class="basket" aria-label="实际购物篮" hidden>
+      <header><h3>实际购物篮</h3><span id="basket-status" class="pill">未下单</span></header>
+      <ul id="basket-lines"><li class="empty">等机器人取到商品后更新</li></ul>
+      <div class="basket-total"><span id="basket-total-label">篮内金额</span><strong id="basket-total">¥0</strong></div>
+    </section>
+  </div>
+  <div id="reorder-actions" class="phone-actions" hidden>
+    <p id="reorder-note"></p>
+    <button id="phone-result" class="secondary" type="button" aria-haspopup="dialog" aria-controls="result-dialog" hidden>查看完整结算</button>
+    <button id="phone-reorder" class="primary" type="button" aria-describedby="reorder-note">重新下单 <span aria-hidden="true">↗</span></button>
+  </div>
+  <div class="phone-footer" aria-hidden="true"><span></span></div>
+</dialog>
+<dialog id="result-dialog" class="result-dialog" aria-labelledby="result-title">
+  <header class="result-head">
+    <div><small>TWILIGHT MART · 订单结算</small><h2 id="result-title">购物完成</h2><p id="result-note"></p></div>
+    <button id="result-close" class="phone-close" type="button" aria-label="关闭结算" autofocus>×</button>
+  </header>
+  <div id="result-body" class="result-body">
+    <dl class="result-summary">
+      <div><dt>实际支付</dt><dd id="result-total"></dd></div>
+      <div><dt>模拟用时</dt><dd id="result-duration"></dd></div>
+      <div><dt>取货算法</dt><dd id="result-mode"></dd></div>
+    </dl>
+    <section aria-labelledby="result-items-title"><h3 id="result-items-title">实际买到的商品</h3><ul id="result-items" class="result-items"></ul></section>
+    <section aria-labelledby="result-decisions-title"><h3 id="result-decisions-title">机器人决策</h3><ol id="result-decisions" class="result-log"></ol></section>
+    <section aria-labelledby="result-log-title"><h3 id="result-log-title">完整运行记录 <small id="result-log-count"></small></h3><ol id="result-log" class="result-log"></ol></section>
+  </div>
+  <footer class="result-actions">
+    <button id="result-back" class="secondary" type="button">返回店内</button>
+    <button id="result-reorder" class="primary" type="button">重新下单 <span aria-hidden="true">↗</span></button>
+  </footer>
+  <div id="result-confetti" class="result-confetti" aria-hidden="true" hidden></div>
+</dialog>
+<noscript>请在支持 JavaScript 的浏览器中打开演示。</noscript>
+</body>
+</html>

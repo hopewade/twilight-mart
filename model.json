@@ -1,0 +1,120 @@
+{
+  "model_version": "synthetic-stockout-cart-v1",
+  "data_origin": "synthetic",
+  "trained": true,
+  "features": [
+    "current_stock",
+    "sales_15m",
+    "promo",
+    "hour",
+    "restock_eta_minutes",
+    "eta_missing"
+  ],
+  "threshold": 0.7,
+  "tree": {
+    "n": 8205,
+    "positive": 1480,
+    "risk_score": 0.18037781840341255,
+    "gini": 0.2956833220628762,
+    "feature": "current_stock",
+    "threshold": 5.5,
+    "left": {
+      "n": 1924,
+      "positive": 1197,
+      "risk_score": 0.6221413721413721,
+      "gini": 0.4701629704228457,
+      "feature": "current_stock",
+      "threshold": 3.5,
+      "left": {
+        "n": 1108,
+        "positive": 838,
+        "risk_score": 0.7563176895306859,
+        "gini": 0.3686024840673018,
+        "feature": "restock_eta_minutes",
+        "threshold": 6.5,
+        "left": {
+          "n": 179,
+          "positive": 70,
+          "risk_score": 0.39106145251396646,
+          "gini": 0.47626478574326647
+        },
+        "right": {
+          "n": 929,
+          "positive": 768,
+          "risk_score": 0.8266953713670614,
+          "gini": 0.28654026865467574
+        }
+      },
+      "right": {
+        "n": 816,
+        "positive": 359,
+        "risk_score": 0.43995098039215685,
+        "gini": 0.4927882304882737,
+        "feature": "sales_15m",
+        "threshold": 5.5,
+        "left": {
+          "n": 366,
+          "positive": 95,
+          "risk_score": 0.25956284153005466,
+          "gini": 0.38437994565379674
+        },
+        "right": {
+          "n": 450,
+          "positive": 264,
+          "risk_score": 0.5866666666666667,
+          "gini": 0.48497777777777773
+        }
+      }
+    },
+    "right": {
+      "n": 6281,
+      "positive": 283,
+      "risk_score": 0.04505651966247413,
+      "gini": 0.08605285939675844,
+      "feature": "current_stock",
+      "threshold": 7.5,
+      "left": {
+        "n": 810,
+        "positive": 165,
+        "risk_score": 0.2037037037037037,
+        "gini": 0.3244170096021948,
+        "feature": "sales_15m",
+        "threshold": 9.5,
+        "left": {
+          "n": 725,
+          "positive": 115,
+          "risk_score": 0.15862068965517243,
+          "gini": 0.2669203329369798
+        },
+        "right": {
+          "n": 85,
+          "positive": 50,
+          "risk_score": 0.5882352941176471,
+          "gini": 0.4844290657439446
+        }
+      },
+      "right": {
+        "n": 5471,
+        "positive": 118,
+        "risk_score": 0.021568269055017363,
+        "gini": 0.042206157649975484,
+        "feature": "sales_15m",
+        "threshold": 9.5,
+        "left": {
+          "n": 5230,
+          "positive": 69,
+          "risk_score": 0.013193116634799235,
+          "gini": 0.02603811661651967
+        },
+        "right": {
+          "n": 241,
+          "positive": 49,
+          "risk_score": 0.2033195020746888,
+          "gini": 0.32396136430157885
+        }
+      }
+    }
+  },
+  "method": "CART classifier, Gini splits",
+  "label": "any observed zero stock during minutes t+1 through t+10, conditional on current stock > 0"
+}
